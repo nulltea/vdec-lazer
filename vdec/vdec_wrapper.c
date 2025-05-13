@@ -7,6 +7,8 @@ void vdec_lnp_tbox(uint8_t seed[32], const lnp_quad_eval_params_t params,
                    polyvec_t sk, int8_t sk_sign[], polyvec_t ct0, polyvec_t ct1,
                    polyvec_t m_delta, unsigned int fhe_degree);
 
+// verify_vdec_lnp_tbox is declared in vdec_wrapper.h now
+
 polyring_srcptr GetRqFromVdecParams1(void)
 {
     return params1->quad_eval->ring;
@@ -68,7 +70,7 @@ polyring_srcptr GetPolyvecRing(polyvec_struct *pv_s_ptr)
     return ((polyvec_ptr)pv_s_ptr)->ring;
 }
 
-void VdecLnpTbox(
+void ProveVdecLnpTbox(
     uint8_t seed[32],
     polyvec_struct *sk_s_ptr,
     int8_t sk_sign[],

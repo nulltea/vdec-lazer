@@ -4,13 +4,14 @@ import sys
 
 # Alice
 q = 2**60  # fhe ciphertext modulus (same as proof modulus)
+print(f"q: {q}")
 delta_m =  2048 # 
 t_inf =  5 # infinity norm of plaintext space
 #noise_dim = 1 * 12288 # number ctxts (64) * fhe_dimension
 noise_dim = 12288 * 64
 
 # Bob
-#Bprime = 4                  # set linf norm bound; this is needed by alpha4; alpha4 is needed by gamma4
+#Bprime = 4                  # set linf norm bound.; this is needed by alpha4; alpha4 is needed by gamma4
 #Bprime = q / (2 * delta_m * t_inf) - 1/2
 Bprime = 2**15
 

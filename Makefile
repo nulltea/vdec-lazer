@@ -21,7 +21,7 @@ CFLAGS_VDEC = $(CFLAGS) $(OPENMP_FLAGS)
 # =======================================
 # Define vdec source directory
 VDEC_DIR = vdec
-VDEC_SRC = $(VDEC_DIR)/vdec.c
+VDEC_SRC = $(VDEC_DIR)/vdec_multi.c
 # =======================================
 
 # honor user CFLAGS
@@ -33,7 +33,7 @@ buildstr = debug
 CFLAGS = $(CFLAGS_DEBUG)
 else
 buildstr = default
-CFLAGS = $(CFLAGS_DEFAULT) $(CFLAGS_FALCON_AMD64) # XXX
+CFLAGS = $(CFLAGS_DEFAULT) $(CFLAGS_FALCON_AMD64) -fPIC # XXX
 endif
 endif
 
@@ -503,10 +503,10 @@ lib-static-all: lazer.h liblazer.a
 lib-static: lazer.h liblazer.a
 
 liblazer.a: src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
-	ar rcs liblazer.a src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
+	$(AR) rcs liblazer.a src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
 
 liblazer.so: src/lazer_shared.o  src/hexl_shared.o $(FALCON_OBJ_SHARED)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -I. -shared -o liblazer.so src/lazer_shared.o src/hexl_shared.o $(FALCON_OBJ_SHARED)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I. -shared -o liblazer.so src/lazer_shared.o src/hexl_shared.o $(FALCON_OBJ_SHARED) $(LIBS)
 
 src/lazer_static.o: $(LIBSOURCES) lazer.h $(FALCON_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(FALCON_DIR) -I. -c -o src/lazer_static.o src/lazer.c
@@ -693,4 +693,29 @@ vdec: $(VDEC_SRC) lazer.h liblazer.a
 	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -I. -I$(VDEC_DIR) -o $(VDEC_DIR)/vdec $(VDEC_SRC) liblazer.a $(LIBS) $(OPENMP_FLAGS)
 #   $(CC) $(CPPFLAGS) $(CFLAGS) -I. -I$(VDEC_DIR) -o $(VDEC_DIR)/vdec $(VDEC_SRC) liblazer.a $(LIBS)
 .PHONY: vdec
+# =======================================
+
+# =======================================
+# VDEC API Shared Library for Go
+# =======================================
+VDEC_WRAPPER_DIR = $(VDEC_DIR)
+VDEC_WRAPPER_SRC = $(VDEC_WRAPPER_DIR)/vdec_wrapper.c
+VDEC_WRAPPER_OBJ = $(VDEC_WRAPPER_DIR)/vdec_wrapper.o
+VDEC_OBJ = $(VDEC_WRAPPER_DIR)/vdec_obj.o
+
+# Add libvdecapi.so to default and all targets if desired, or create a new target
+all: libvdecapi.so
+
+$(VDEC_WRAPPER_OBJ): $(VDEC_WRAPPER_SRC) $(VDEC_WRAPPER_DIR)/vdec_wrapper.h lazer.h $(VDEC_WRAPPER_DIR)/vdec_params.h
+	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -fPIC -I. -I$(VDEC_WRAPPER_DIR) -Isrc -c $< -o $@
+
+$(VDEC_OBJ): $(VDEC_SRC) lazer.h $(VDEC_WRAPPER_DIR)/vdec_params.h
+	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -fPIC -I. -I$(VDEC_WRAPPER_DIR) -Isrc -c $< -o $@
+
+libvdecapi.so: $(VDEC_WRAPPER_OBJ) $(VDEC_OBJ) liblazer.a
+	$(CC) $(CPPFLAGS) $(CFLAGS) -shared -o libvdecapi.so $(VDEC_WRAPPER_OBJ) $(VDEC_OBJ) liblazer.a $(LIBS) $(OPENMP_FLAGS)
+	@echo "Built libvdecapi.so"
+
+.PHONY: libvdecapi
+libvdecapi: libvdecapi.so
 # =======================================
