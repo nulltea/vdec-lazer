@@ -232,4 +232,3 @@ write_c_array_to_file(pk[0].to_list(), array_name="static_pk0", array_type="int6
 write_c_array_to_file(pk[1].to_list(), array_name="static_pk1", array_type="int64_t")
 write_c_array_to_file(e.to_list(), ct_count=ct_count, array_name="static_e", array_type="int64_t")
 add_footer_guards()
-

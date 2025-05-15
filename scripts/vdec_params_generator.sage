@@ -4,7 +4,6 @@ import sys
 
 # Alice
 q = 2**60  # fhe ciphertext modulus (same as proof modulus)
-print(f"q: {q}")
 delta_m =  2048 # 
 t_inf =  5 # infinity norm of plaintext space
 #noise_dim = 1 * 12288 # number ctxts (64) * fhe_dimension
