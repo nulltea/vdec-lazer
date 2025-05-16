@@ -6,7 +6,7 @@ CFLAGS_DEBUG = $(CFLAGS_WARN) -Og -ggdb3
 ADD_CPPFLAGS = -DNDEBUG
 
 CPPFLAGS += $(ADD_CPPFLAGS)
-LIBS = -lm $(HEXL_DIR)/build/hexl/lib/libhexl.a -lstdc++
+LIBS = -lm $(HEXL_DIR)/build/hexl/lib64/libhexl.a -lstdc++
 
 #========
 # OpenMP
@@ -15,14 +15,6 @@ OPENMP_FLAGS = -fopenmp
 CFLAGS_VDEC = $(CFLAGS) $(OPENMP_FLAGS)
 
 #========
-
-# =======================================
-# Proof of decryption
-# =======================================
-# Define vdec source directory
-VDEC_DIR = vdec
-VDEC_SRC = $(VDEC_DIR)/vdec_multi.c
-# =======================================
 
 # honor user CFLAGS
 ifdef CFLAGS
@@ -33,7 +25,7 @@ buildstr = debug
 CFLAGS = $(CFLAGS_DEBUG)
 else
 buildstr = default
-CFLAGS = $(CFLAGS_DEFAULT) $(CFLAGS_FALCON_AMD64) -fPIC # XXX
+CFLAGS = $(CFLAGS_DEFAULT) $(CFLAGS_FALCON_AMD64) # XXX
 endif
 endif
 
@@ -51,8 +43,8 @@ endif
 LIBS += $(libgmp)
 
 .PHONY: default all
-default: lib vdec
-all: lib-all vdec
+default: lib
+all: lib-all
 
 
 THIRD_PARTY_DIR = third_party
@@ -503,10 +495,10 @@ lib-static-all: lazer.h liblazer.a
 lib-static: lazer.h liblazer.a
 
 liblazer.a: src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
-	$(AR) rcs liblazer.a src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
+	ar rcs liblazer.a src/lazer_static.o src/hexl_static.o $(FALCON_OBJ_STATIC)
 
 liblazer.so: src/lazer_shared.o  src/hexl_shared.o $(FALCON_OBJ_SHARED)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -I. -shared -o liblazer.so src/lazer_shared.o src/hexl_shared.o $(FALCON_OBJ_SHARED) $(LIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I. -shared -o liblazer.so src/lazer_shared.o src/hexl_shared.o $(FALCON_OBJ_SHARED)
 
 src/lazer_static.o: $(LIBSOURCES) lazer.h $(FALCON_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(FALCON_DIR) -I. -c -o src/lazer_static.o src/lazer.c
@@ -674,48 +666,13 @@ doc/html/index.html: $(TEXSOURCES) doc/pdf/lazer_manual.pdf # rely on latexmk fo
 
 .PHONY: html
 clean:
-	rm -f lazer.h liblazer.a liblazer.so liblabrador.a liblabrador.so $(VDEC_DIR)/vdec
-	cd scripts && rm -f moduli.sage.py lnp-codegen.sage.py abdlop-codegen.sage.py lnp-quad-codegen.sage.py lnp-quad-eval-codegen.sage.py lnp-tbox-codegen.sage.py lin-codegen.sage.py
-	cd src && rm -f *.o
-	cd src/labrador && rm -f *.o
-	cd $(THIRD_PARTY_DIR) && rm -rf $(FALCON_SUBDIR)
-	cd $(THIRD_PARTY_DIR) && rm -rf $(HEXL_SUBDIR)
-	cd tests && rm -f *.o *.dSYM && cd .. && rm -f $(TESTS) && rm -f sage-test.sage.py
-	cd bench && cd .. && rm -f $(BENCH)
-	cd examples && cd .. && rm -f $(EXAMPLES)
-
-
-# =======================================
-# Proof of decryption
-# =======================================
-# Target for vdec executable
-vdec: $(VDEC_SRC) lazer.h liblazer.a
-	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -I. -I$(VDEC_DIR) -o $(VDEC_DIR)/vdec $(VDEC_SRC) liblazer.a $(LIBS) $(OPENMP_FLAGS)
-#   $(CC) $(CPPFLAGS) $(CFLAGS) -I. -I$(VDEC_DIR) -o $(VDEC_DIR)/vdec $(VDEC_SRC) liblazer.a $(LIBS)
-.PHONY: vdec
-# =======================================
-
-# =======================================
-# VDEC API Shared Library for Go
-# =======================================
-VDEC_WRAPPER_DIR = $(VDEC_DIR)
-VDEC_WRAPPER_SRC = $(VDEC_WRAPPER_DIR)/vdec_wrapper.c
-VDEC_WRAPPER_OBJ = $(VDEC_WRAPPER_DIR)/vdec_wrapper.o
-VDEC_OBJ = $(VDEC_WRAPPER_DIR)/vdec_obj.o
-
-# Add libvdecapi.so to default and all targets if desired, or create a new target
-all: libvdecapi.so
-
-$(VDEC_WRAPPER_OBJ): $(VDEC_WRAPPER_SRC) $(VDEC_WRAPPER_DIR)/vdec_wrapper.h lazer.h $(VDEC_WRAPPER_DIR)/vdec_params.h
-	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -fPIC -I. -I$(VDEC_WRAPPER_DIR) -Isrc -c $< -o $@
-
-$(VDEC_OBJ): $(VDEC_SRC) lazer.h $(VDEC_WRAPPER_DIR)/vdec_params.h
-	$(CC) $(CPPFLAGS) $(CFLAGS_VDEC) -fPIC -I. -I$(VDEC_WRAPPER_DIR) -Isrc -c $< -o $@
-
-libvdecapi.so: $(VDEC_WRAPPER_OBJ) $(VDEC_OBJ) liblazer.a
-	$(CC) $(CPPFLAGS) $(CFLAGS) -shared -o libvdecapi.so $(VDEC_WRAPPER_OBJ) $(VDEC_OBJ) liblazer.a $(LIBS) $(OPENMP_FLAGS)
-	@echo "Built libvdecapi.so"
-
-.PHONY: libvdecapi
-libvdecapi: libvdecapi.so
-# =======================================
+	rm -f liblazer.a liblazer.so liblabrador.a liblabrador.so
+	-test -d scripts && cd scripts && rm -f moduli.sage.py lnp-codegen.sage.py abdlop-codegen.sage.py lnp-quad-codegen.sage.py lnp-quad-eval-codegen.sage.py lnp-tbox-codegen.sage.py lin-codegen.sage.py
+	-test -d src && cd src && rm -f *.o
+	-test -d src/labrador && cd src/labrador && rm -f *.o
+	-test -d $(THIRD_PARTY_DIR) && cd $(THIRD_PARTY_DIR) && rm -rf $(FALCON_SUBDIR)
+	-test -d $(THIRD_PARTY_DIR) && cd $(THIRD_PARTY_DIR) && rm -rf $(HEXL_SUBDIR)
+	-test -d tests && cd tests && rm -f *.o *.dSYM
+	-rm -f $(TESTS) sage-test.sage.py
+	-rm -f $(BENCH)
+	-rm -f $(EXAMPLES)
