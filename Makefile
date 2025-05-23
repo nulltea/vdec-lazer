@@ -184,6 +184,9 @@ HEXL_ZIP = $(HEXL_DIR).zip
 
 $(HEXL_DIR): $(HEXL_ZIP)
 	cd $(THIRD_PARTY_DIR) && unzip $(HEXL_SUBDIR).zip
+	# Create defines.hpp from the template file
+	cp $(HEXL_DIR)/hexl/include/hexl/util/defines.hpp.in $(HEXL_DIR)/hexl/include/hexl/util/defines.hpp
+	# Then build as normal
 	cd $(HEXL_DIR) && cmake -S . -B build 
 	cd $(HEXL_DIR) && cmake --build build
 #	cd $(HEXL_DIR) && cmake -S . -B build -DHEXL_SHARED_LIB=ON
@@ -507,10 +510,10 @@ src/lazer_shared.o: $(LIBSOURCES) lazer.h $(FALCON_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(FALCON_DIR) -I. -c -fPIC -o src/lazer_shared.o src/lazer.c
 
 src/hexl_static.o: src/hexl.h $(HEXL_DIR)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) -Isrc -I$(HEXL_DIR)/hexl/include -c -o src/hexl_static.o src/hexl.cpp
+	$(CXX) $(CPPFLAGS) $(CFLAGS) -Isrc -I$(HEXL_DIR)/hexl/include -I$(HEXL_DIR)/build/hexl/include -c -o src/hexl_static.o src/hexl.cpp
 
 src/hexl_shared.o: src/hexl.h $(HEXL_DIR)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) -Isrc -I$(HEXL_DIR)/hexl/include -c -fPIC -o src/hexl_shared.o src/hexl.cpp
+	$(CXX) $(CPPFLAGS) $(CFLAGS) -Isrc -I$(HEXL_DIR)/hexl/include -I$(HEXL_DIR)/build/hexl/include -c -fPIC -o src/hexl_shared.o src/hexl.cpp
 
 lazer.h: src/lazer-in1.h src/lazer-in2.h src/moduli.h config.h
 	cat src/lazer-in1.h > lazer.h
